@@ -7,7 +7,7 @@ times 0x20-($-$$) db 0 ; in case bios expects BPB
 println:
 	mov ah, 0x0e
 	.inner:
-		lodsb 
+		lodsb
 		cmp al, 0x0
 		je .print_done
 		int 0x10
@@ -73,30 +73,30 @@ start:
 
 
 loadString	db	"Bootloader OK", 0x0
-DAPLoad	db	"DAP Load OK", 0x0
-DAPFail	db	"DAP Load Failed", 0x0
+DAPLoad		db	"DAP Load OK", 0x0
+DAPFail		db	"DAP Load Failed", 0x0
 FLOPPYLoad	db	"Floppy Load OK", 0x0
 FLOPPYFail	db	"Floppy Load FAIL", 0x0
 
 BOOTDRIVE	db	0
 
 DAP:
-	.size		db	0x10
-	.unused		db	0x00
-	.sectoread	dw	127
-	.destoffset	dw	0x0
+	.size			db	0x10
+	.unused			db	0x00
+	.sectoread		dw	127
+	.destoffset		dw	0x0
 	.destsegment	dw	0x0
 	.firstsector	dq	0x0
 
 times 466-($-$$) db 0
 ;MASTER BOOT RECORD (LBA PROPOSED FORMAT)
 MBR:
-	.bootable		db	0x80
-	.signature1		db	0x14
+	.bootable				db	0x80
+	.signature1				db	0x14
 	.partition_start_h16	dw	0x00
-	.systemID		db	0x01
-	.signature2		db	0xeb
-	.partion_length_h16	dw	0x00
+	.systemID				db	0x01
+	.signature2				db	0xeb
+	.partion_length_h16		dw	0x00
 	.partition_start_l32	dd	0x01
 	.partition_length_l32	dd	127
 ;;no more partitions

@@ -53,7 +53,7 @@ GDT:
 		.base_low		dw	0x0000
 		.base_middle	db 	0x00
 		.access			db	10010010b ; data descriptor,
-		.grannularity	db	11001111b
+		.granularity	db	11001111b
 		.base_high		db	0x00
 GDT_PTR:
 	.size		dw	$-GDT-1
@@ -74,12 +74,7 @@ keyboard_wait_output:
 	ret
 
 print_32:
-	push edx
-	mov eax, 2
-	mul edi
-	mov edi, eax
-	add edi, 0xb8000
-	pop edx
+	lea edi, [edi*2 + 0xb8000]
 	.inner:
 		lodsb
 		cmp al, 0x0
@@ -90,6 +85,48 @@ print_32:
 		jmp .inner
 	.done:
 	ret
+
+setup_paging:
+	mov ecx, 1024
+	mov eax, 0x00
+	mov edi, 0x1000
+	rep stosd
+	mov ecx, 1024
+	mov edi, 0x2000
+	rep stosd
+	mov ecx, 1024
+	mov edi, 0x3000
+	rep stosd
+
+	mov eax, 0x2000 ; first P3 table
+	or eax,  0b11
+	mov dword [0x1000], eax ; first p4 table is active and points to first p3 table
+
+	mov eax, 0x3000
+	or eax,	0b11
+	mov dword [0x2000], eax ; first p3 table is active and points to first p2 table
+
+	mov ecx, 0
+	.map_p2:
+		mov eax, 0x200000 ;2mb pages
+		mul ecx
+		or eax, 0b10000011;2mb pages, present, writable
+		mov [0x3000 + ecx * 8], eax
+		inc ecx
+		cmp ecx, 512
+		jne .map_p2
+
+	
+	;load address of p4 to c0
+	mov eax, 0x1000
+	mov cr3, eax
+	;enable PAE
+	mov eax, cr4
+	or eax, 1 << 5
+	mov cr4, eax
+
+	ret
+
 
 BITS_32:
 	;set data descriptor to 0x10 (as in GDT)
@@ -130,8 +167,113 @@ BITS_32:
 	mov edi, 80*6
 	call print_32
 
-	jmp $
+
+	;;prior to entering longmode - check if CPUID is available
+	pushfd ; push flags register 
+	pop eax
+	mov ecx, eax ; store flags
+
+	xor eax, 1 << 21
+	push eax
+	popfd ; from eax to flags
+
+	pushfd
+	pop eax
+
+	push ecx
+	popfd ;restore old CPUID
+	xor eax, ecx ; should not be zero if the bit was flipped
+
+	jnz .cpuid_good
+		mov dl, 4
+		mov esi, NOCPUID
+		mov edi, 80*7
+		call print_32
+		jmp $
+
+	.cpuid_good:
+	mov dl, 9
+	mov esi, CPUIDOK,
+	mov edi, 80*7
+	call print_32
+	;if this point is reached then CPUID is supported
+	mov eax, 0x80000000 
+	cpuid
+	cmp eax, 0x80000001
+	jb .noLongMode
+	;if eax is smaller than 0x80000001 - cpuid longmode probing function is not available - no longmode
+	mov eax, 0x80000001
+	cpuid
+	test edx, 1 << 29 ;;cpuid returns to EDX - bit 29 indicates longmode availability
+	jz .noLongMode
+	jmp .longAvailable
+
+	.noLongMode:
+		mov dl, 4
+		mov esi, NOLONG
+		mov edi, 80*8
+		call print_32
+		jmp $
+
+	.longAvailable:
+	mov dl, 9
+	mov esi, LONGOK
+	mov edi, 80*8
+	call print_32
+
+	;check for PAE paging
+	mov eax, 0x00000001
+	cpuid
+	test edx, 1 << 6
+	jz .NoPAE
+	jmp .PAEAvailable
+	.NoPAE:
+		mov dl, 4
+		mov esi, NOPAE
+		mov edi, 80*9
+		call print_32
+	.PAEAvailable:
+	mov dl, 9
+	mov esi, PAEOK
+	mov edi, 80*9
+	call print_32
+
+	;set up paging
+	call setup_paging
+
+	mov ecx, 0xC0000080
+	rdmsr
+	or eax, 1 << 8 ; longmode bit
+	wrmsr
+
+	mov eax, cr0
+	or eax, 1 << 31 ;paging bit
+	mov cr0, eax
+
+	mov al, GDT_CODE_DESC.granularity
+	or al, 1 << 5
+	mov byte [GDT_CODE_DESC.granularity], al
+
+	lgdt [GDT_PTR]
+
+	mov dl, 9
+	mov esi, OK64
+	mov edi, 80*10
+	call print_32
+
+	jmp 0x08:mode_64
 
 
 Entered32	db	"Entered protected mode and set up the A20 line.", 0x0
+NOCPUID		db	"CPUID is not supported on this architecture.", 0x0
+CPUIDOK		db	"CPUID is supported...", 0x00
+NOLONG		db	"Longmode (x86_64) not available...", 0x0
+LONGOK		db	"Longmode is avaiable, switching to 64-bits", 0x0
+PAEOK		db	"PAE Paging is available. Setting up pages", 0x0
+NOPAE		db	"PAE Paging unavailable...", 0x0
+OK64		db	"64 bit GDT and paging set up, entering longmode", 0x0
+
+bits 64
+mode_64:
+	jmp $
 times 127*512-($-$$) db 0

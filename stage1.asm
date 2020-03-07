@@ -2,6 +2,8 @@ org 0x7C00
 bits 16
 jmp 0x0000:start
 
+%include 'constants.asm'
+
 times 0x20-($-$$) db 0 ; in case bios expects BPB
 
 println:
@@ -21,7 +23,8 @@ println:
 
 start:
 	;setup registers
-	mov [BOOTDRIVE], dl
+	mov byte [BOOTDRIVE], dl
+	mov byte [BOOT_DRIVE_ADDR], dl
 	xor ax, ax
 	mov ds, ax
 	mov ss, ax
@@ -36,11 +39,11 @@ start:
 	.loadRemainingSectors:
 		;;try to read using DAP
 		mov ax, stage2
-		mov [DAP.destoffset], ax
+		mov word [DAP.destoffset], ax
 		mov al, 1
-		mov [DAP.firstsector], al ;little endian
+		mov byte [DAP.firstsector], al ;little endian
 		mov ax, 0x4200
-		mov dl, [BOOTDRIVE]
+		mov byte dl, [BOOTDRIVE]
 		mov si, DAP
 		int 0x13
 		jnc .DAPDone
@@ -52,7 +55,7 @@ start:
 		mov ch, 0
 		mov cl, 2
 		mov dh, 0
-		mov dl, [BOOTDRIVE]
+		mov byte dl, [BOOTDRIVE]
 		xor bx, bx
 		mov es, bx
 		mov bx, stage2

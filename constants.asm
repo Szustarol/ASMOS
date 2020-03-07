@@ -1,0 +1,3 @@
+BOOT_DRIVE_ADDR equ 0x501
+PDPT_ADDR       equ 0x1000
+PD_ADDR         equ 0x2000

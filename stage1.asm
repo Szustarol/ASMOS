@@ -43,13 +43,14 @@ start:
 		mov al, 1
 		mov byte [DAP.firstsector], al ;little endian
 		mov ax, 0x4200
-		mov byte dl, [BOOTDRIVE]
+		mov byte dl, [BOOT_DRIVE_ADDR]
 		mov si, DAP
 		int 0x13
 		jnc .DAPDone
 		mov si, DAPFail
 		call println
 		;;try to read as a floppy
+		mov byte [DAP_LOAD_SUPPORTED_ADDR], 0x0
 		mov ah, 0x02
 		mov al, 127
 		mov ch, 0
@@ -69,8 +70,18 @@ start:
 	call println
 	jmp .loadDone
 	.DAPDone:
+	mov byte [DAP_LOAD_SUPPORTED_ADDR], 0xff
 	mov si, DAPLoad
 	call println
+	;get drive geometry
+	mov ah, 0x08
+	mov di, 0x0000
+	mov byte dl, [BOOTDRIVE]
+	int 0x13
+	inc dh
+	mov [HEADS_PER_CYLINDER_ADDR], dh
+	and cl, 0x3f
+	mov [SECTORS_PER_TRACK_ADDR], cl
 	.loadDone:
 	jmp 0x0000:stage2
 

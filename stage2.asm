@@ -2,6 +2,8 @@ bits 16
 org 0x7c00+512
 jmp 0x0000:stage2
 
+%include 'constants.asm'
+
 println:
 	mov ah, 0x0e
 	.inner:
@@ -17,10 +19,84 @@ println:
 	int 0x10
 	ret
 
+printnum:
+	;num in bx
+	cmp bx, 0
+	je .done
+		;remainder
+		xor dx, dx
+		mov ax, bx
+		mov cx, 10
+		div cx
+		mov bx, ax
+		mov al, dl
+		add al, 48
+		mov ah, 0x0e
+		int 0x10
+		jmp printnum
+	.done:
+	ret
+
+
+DAP:
+	.size			db	0x10
+	.unused			db	0x00
+	.sectoread		dw	127
+	.destoffset		dw	0x0
+	.destsegment	dw	0x0
+	.firstsector	dq	0x0
+
 stage2:
 	call println
 	mov si, LoadGood
 	call println
+	xor ax, ax
+	mov ds, ax
+	;load remaining kernel sectors
+	mov al, [DAP_LOAD_SUPPORTED_ADDR]
+	cmp al, 0x0
+	je .floppy_load
+		mov si, DAP
+		mov ax, 0x4200
+		mov word [DAP.destoffset], 0x0
+		mov word [DAP.destsegment], 0x1000
+		mov word [DAP.firstsector], 128
+		mov byte dl, [BOOT_DRIVE_ADDR]
+		int 0x13
+		jnc .load_done
+	.floppy_load:
+		xor dx, dx
+		mov ax, 128
+		xor cx, cx
+		mov cl, [SECTORS_PER_TRACK_ADDR]
+		div cx
+		inc dx
+		mov [Sector], dl
+		;ax constains LBA/SPT
+		xor dx, dx
+		xor ch, ch
+		mov cl, [HEADS_PER_CYLINDER_ADDR]
+		div cx
+		mov [Head], dl
+		mov al, [HEADS_PER_CYLINDER_ADDR]
+		mov cl, [SECTORS_PER_TRACK_ADDR]
+		mul cl
+		mov cx, ax
+		mov ax, 128
+		xor dx, dx
+		div cx
+		mov [Cylinder], al
+		xor ax, 0x1000
+		mov es, ax
+		mov bx, 0x0000
+		mov ah, 0x02
+		mov al, 127
+		mov ch, [Cylinder]
+		mov cl, [Sector]
+		mov dh, [Head]
+		mov dl, [BOOT_DRIVE_ADDR]
+		int 0x13
+	.load_done:
 	cli
 	lgdt [GDT_PTR]
 	sti
@@ -33,6 +109,9 @@ stage2:
 	mov cr0, eax
 	jmp 0x08:BITS_32
 
+Cylinder	db 0
+Head		db 0
+Sector		db 0
 Yes			db	"yes", 0x0
 None		db	"Not", 0x0
 StackTest	db	"Stack first insert at 0x7c00", 0x0
@@ -116,7 +195,7 @@ setup_paging:
 		cmp ecx, 512
 		jne .map_p2
 
-	
+
 	;load address of p4 to c0
 	mov eax, 0x1000
 	mov cr3, eax
@@ -169,7 +248,7 @@ BITS_32:
 
 
 	;;prior to entering longmode - check if CPUID is available
-	pushfd ; push flags register 
+	pushfd ; push flags register
 	pop eax
 	mov ecx, eax ; store flags
 
@@ -197,7 +276,7 @@ BITS_32:
 	mov edi, 80*7
 	call print_32
 	;if this point is reached then CPUID is supported
-	mov eax, 0x80000000 
+	mov eax, 0x80000000
 	cpuid
 	cmp eax, 0x80000001
 	jb .noLongMode
@@ -274,6 +353,48 @@ NOPAE		db	"PAE Paging unavailable...", 0x0
 OK64		db	"64 bit GDT and paging set up, entering longmode", 0x0
 
 bits 64
+;;rsi - source pointer
+;ah - row
+;al - column
+;dl - color
+scrwidth equ 80
+scrheight equ 25
+
+print_string:
+	mov cl, al
+	mov ch, ah
+	xor rax, rax
+	mov al, ch ; row
+	mov bl, scrwidth*2
+	mul bl
+	xor rdi, rdi
+	add rdi, rax
+	xor rax, rax
+	mov al, cl
+	mov bl, 2
+	mul bl
+	add rdi, rax
+	lea rdi, [rdi + 0xb8000]
+	.inner:
+		lodsb
+		cmp al, 0x0
+		je .done
+		mov byte [rdi], al
+		mov byte [rdi+1], dl
+		add rdi, 2
+		jmp .inner
+	.done:
+
+	ret
+
 mode_64:
-	jmp $
+	mov rsi, longmodeOn
+	mov ah, 12
+	mov al, 0
+	mov dl, 10
+	call print_string
+	mov qword [PRINT_STRING_ADDR], print_string
+	jmp 0x10000
+
+longmodeOn db	"Longmode entered Successfully.", 0x0
 times 127*512-($-$$) db 0

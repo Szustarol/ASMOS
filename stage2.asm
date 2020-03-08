@@ -117,6 +117,7 @@ None		db	"Not", 0x0
 StackTest	db	"Stack first insert at 0x7c00", 0x0
 LoadGood	db	"Successfully entered second stage.", 0x0
 GDTGood		db	"GDT Loaded OK", 0x0
+align 8
 GDT:
 	GDT_NULL_DESC:
 		.null:			dq	0
@@ -317,6 +318,7 @@ BITS_32:
 	mov edi, 80*9
 	call print_32
 
+
 	;set up paging
 	call setup_paging
 
@@ -329,19 +331,35 @@ BITS_32:
 	or eax, 1 << 31 ;paging bit
 	mov cr0, eax
 
-	mov al, GDT_CODE_DESC.granularity
-	or al, 1 << 5
-	mov byte [GDT_CODE_DESC.granularity], al
-
-	lgdt [GDT_PTR]
+	lgdt [GDT64_PTR]
 
 	mov dl, 9
 	mov esi, OK64
 	mov edi, 80*10
 	call print_32
-
 	jmp 0x08:mode_64
 
+align 8
+GDT64:
+	;null descriptor
+	dq 0
+	;code
+	dw 0
+    dw 0
+    db 0
+    db 10011010b
+    db 00100000b
+    db 0
+	;data
+	dw 0
+	dw 0
+	db 0
+	db 10010010b
+	db 00100000b
+	db 0
+GDT64_PTR:
+	.size		dw	$-GDT64-1
+	.address	dd	GDT64
 
 Entered32	db	"Entered protected mode and set up the A20 line.", 0x0
 NOCPUID		db	"CPUID is not supported on this architecture.", 0x0

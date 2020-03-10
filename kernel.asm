@@ -10,6 +10,7 @@ longmode:
 	mov al, 0
 	mov dl, 10
 	call [PRINT_STRING_ADDR]
+	call [CLR_SCR_ADDR]
 	jmp $
 
 	;;rsi - source pointer

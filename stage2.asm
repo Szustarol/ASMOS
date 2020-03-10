@@ -378,6 +378,49 @@ bits 64
 scrwidth equ 80
 scrheight equ 25
 
+clr_scr:
+	mov rdi, 0xb8000
+	mov rcx, scrwidth*scrheight
+	mov ax, 0
+	rep stosw
+	mov al, 205
+	mov ah, 13
+	mov rcx, scrwidth
+	mov rdi, 0xb8000
+	rep stosw
+	mov rcx, scrwidth
+	mov rdi, 0xb8000 + 2*(scrheight-1)*scrwidth
+	rep stosw
+	mov al, 186
+	mov rdi, 0xb8000 + scrwidth*2
+	mov ecx, scrheight-2
+	.v1:
+		mov word [rdi], ax
+		mov word [rdi+scrwidth*2-2], ax
+		add rdi, scrwidth*2
+		loop .v1
+	mov rdi, 0xb8000 + scrwidth*2*(scrheight-3) + 2
+	mov ecx, scrwidth - 2
+	mov al, 205
+	.v2:
+		mov word [rdi], ax
+		add rdi, 2
+		loop .v2
+	mov al, 201
+	mov word [0xb8000], ax
+	mov al, 188
+	mov word [0xb8000 + scrwidth*scrheight*2-2], ax
+	mov al, 187
+	mov word [0xb8000 + scrwidth*2-2], ax
+	mov al, 200
+	mov word [0xb8000 + (scrheight-1)*scrwidth*2], ax
+	mov al, 204
+	mov word [0xb8000 + (scrheight-3)*scrwidth*2], ax
+	mov al, 185
+	mov word [0xb8000 +  (scrheight-2)*scrwidth*2-2], ax
+
+	ret 
+
 print_string:
 	mov cl, al
 	mov ch, ah
@@ -405,6 +448,43 @@ print_string:
 
 	ret
 
+keyboard_controler_get_status:
+	in al, KBD_CTL_STA_REGS
+	ret
+
+keyboard_encoder_read_buffer:
+	in al, KBD_ENC_INP_BUFF
+	ret
+
+;ah - command
+keyboard_encoder_send_command:
+	call keyboard_controler_get_status
+	test al, KYBRD_CTRL_STATS_MASK_IN_BUF
+	jnz keyboard_controler_send_command
+	mov al, ah
+	out KBD_ENC_CMD_REGS, al
+	ret
+
+
+;ah - command
+keyboard_controler_send_command:
+	call keyboard_controler_get_status
+	test al, KYBRD_CTRL_STATS_MASK_IN_BUF
+	jnz keyboard_controler_send_command
+	mov al, ah
+	out KBD_CTL_CMD_REGS, al
+	ret
+
+keyboard_self_test:
+	mov ah, 0xAA
+	call keyboard_controler_send_command
+	.l:
+		call keyboard_controler_get_status
+		test al, KYBRD_CTRL_STATS_MASK_OUT_BUF
+		jnz .l
+	call keyboard_encoder_read_buffer
+	ret
+
 mode_64:
 	mov rsi, longmodeOn
 	mov ah, 12
@@ -412,6 +492,7 @@ mode_64:
 	mov dl, 10
 	call print_string
 	mov qword [PRINT_STRING_ADDR], print_string
+	mov qword [CLR_SCR_ADDR], clr_scr
 	jmp 0x10000
 
 longmodeOn db	"Longmode entered Successfully.", 0x0

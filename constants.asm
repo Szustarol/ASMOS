@@ -8,7 +8,18 @@ PD_ADDR         		equ 0x2000
 PRINT_STRING_ADDR		equ 0x510
 CLR_SCR_ADDR            equ 0x518
 KBD_GETCH               equ 0x520
+KBD_DISCARD             equ 0x528
+CMD_PARSE_ADDR          equ 0x530
+PRINT_PROG_ADDR         equ 0x538
+INFO_PROG_ADDR          equ 0x540
 
+COMMAND_ID_ADDR         equ 0x700
+COMMAND_BUFFER_ADDR     equ 0x708
+COMMAND_POINTER_ADDR    equ 0x710
+
+
+PROG_PRINT_ID           equ 1
+PROG_INFO_ID            equ 2
 
 KBD_ENC_INP_BUFF        equ 0x60
 KBD_ENC_CMD_REGS        equ 0x60
@@ -26,6 +37,12 @@ KYBRD_CTRL_STATS_MASK_AUX_BUF	equ	0x20
 KYBRD_CTRL_STATS_MASK_TIMEOUT	equ	0x40
 KYBRD_CTRL_STATS_MASK_PARITY	equ	0x80
 
+scrwidth    equ 80
+scrheight   equ 25
+
+SCAN_BACKSPACE  equ 0x08
+SCAN_ENTER      equ 0x0D
+SCAN_SPACE      equ 0x20
 
 KEY_UNKNOWN equ 0
 KEY_ESCAPE equ 1

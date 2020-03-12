@@ -7,7 +7,7 @@ bootloader.bin: stage1.bin stage2.bin kernel.bin
 kernel.bin: kernel.asm
 	nasm kernel.asm -o kernel.bin
 
-stage2.bin: stage2.asm
+stage2.bin: stage2.asm Utility/*.asm
 	nasm stage2.asm -o stage2.bin
 
 stage1.bin: stage1.asm

@@ -2,7 +2,9 @@ org 0x10000
 bits 64
 jmp longmode
 
+%include 'Programs/info.asm'
 %include 'constants.asm'
+%include 'Programs/reboot.asm'
 
 longmode:
 	mov rsi, kernelOn
@@ -13,7 +15,7 @@ longmode:
 	call [KBD_GETCH]
 	call [CLR_SCR_ADDR]
 	call [KBD_DISCARD]
-
+	call program_info
 	.main_loop:
 		mov al, 0x0
 		;zero flags
@@ -86,7 +88,13 @@ longmode:
 				jmp .no_command
 			.pcheck_info:
 				cmp al, PROG_INFO_ID
+				jg .pcheck_reboot
+				call program_info
+				jmp .no_command
+			.pcheck_reboot:
+				cmp al, PROG_REBOOT_ID
 				jg .wrong_command
+				call program_reboot
 				jmp .no_command
 
 		.wrong_command:

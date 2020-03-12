@@ -50,6 +50,7 @@ clr_scr:
 print_string:
 	push rcx
 	push rdx
+    push rax
 	mov cl, al
 	mov ch, ah
 	xor rax, rax
@@ -73,6 +74,7 @@ print_string:
 		add rdi, 2
 		jmp .inner
 	.done:
+    pop rax
 	pop rdx
 	pop rcx
 	ret

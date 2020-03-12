@@ -20,6 +20,7 @@ COMMAND_POINTER_ADDR    equ 0x710
 
 PROG_PRINT_ID           equ 1
 PROG_INFO_ID            equ 2
+PROG_REBOOT_ID          equ 3
 
 KBD_ENC_INP_BUFF        equ 0x60
 KBD_ENC_CMD_REGS        equ 0x60

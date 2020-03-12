@@ -377,12 +377,14 @@ bits 64
 %include 'Utility/commandParser.asm'
 
 mode_64:
+	mov rsp, 0x00EFFFFF
 	mov rsi, longmodeOn
 	mov ah, 12
 	mov al, 0
 	mov dl, 10
 	call print_string
 	call parser_setup
+	
 	mov qword [PRINT_STRING_ADDR], print_string
 	mov qword [CLR_SCR_ADDR], clr_scr
 	mov qword [KBD_GETCH], keyboard_getch

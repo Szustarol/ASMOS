@@ -4,7 +4,7 @@ deploy: bootloader.bin
 bootloader.bin: stage1.bin stage2.bin kernel.bin
 	cat stage1.bin stage2.bin kernel.bin > bootloader.bin
 
-kernel.bin: kernel.asm
+kernel.bin: kernel.asm Programs/*.asm
 	nasm kernel.asm -o kernel.bin
 
 stage2.bin: stage2.asm Utility/*.asm

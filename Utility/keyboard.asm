@@ -29,6 +29,7 @@ keyboard_controler_send_command:
 	ret
 
 keyboard_self_test:
+	xor rax, rax
 	mov ah, 0xAA
 	call keyboard_controler_send_command
 	.l:	push rbx

@@ -13,14 +13,15 @@ CMD_PARSE_ADDR          equ 0x530
 PRINT_PROG_ADDR         equ 0x538
 INFO_PROG_ADDR          equ 0x540
 
-COMMAND_ID_ADDR         equ 0x700
-COMMAND_BUFFER_ADDR     equ 0x708
-COMMAND_POINTER_ADDR    equ 0x710
+COMMAND_ID_ADDR         equ 0x600
+COMMAND_BUFFER_ADDR     equ 0x608
+COMMAND_POINTER_ADDR    equ 0x610
 
 
 PROG_PRINT_ID           equ 1
 PROG_INFO_ID            equ 2
 PROG_REBOOT_ID          equ 3
+PROG_PRINTLN_ID         equ 4
 
 KBD_ENC_INP_BUFF        equ 0x60
 KBD_ENC_CMD_REGS        equ 0x60

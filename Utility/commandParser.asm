@@ -86,6 +86,10 @@ parse_command:
     call space_compare
     cmp rcx, 0
     jne .got_reboot
+    mov rbx, printlnName
+    call space_compare
+    cmp rcx, 0
+    jne .got_println
     jmp .done
     .got_print:
         mov byte [commandID], PROG_PRINT_ID
@@ -96,13 +100,47 @@ parse_command:
     .got_reboot:
         mov byte [commandID], PROG_REBOOT_ID
         jmp .parse_params
+    .got_println:
+        mov byte [commandID], PROG_PRINTLN_ID
+        jmp .parse_params
     .parse_params:
+        xor rdx, rdx
+        add rax, rcx
+        xor rcx, rcx
+        inc rax
+        mov byte [commptr], 1
+        .cmp:
+            mov byte dl, [rax]
+            cmp dl, 0x0
+            je .done_parsing
+            cmp dl, ' '
+            je .new
+            mov byte [commBuffer + rcx], dl
+            inc rax
+            inc rcx
+            jmp .cmp
+            .new:
+                inc dh
+                push rdx
+                mov dl, dh
+                and rdx, 0x00000000000000ff
+                add cl, 2
+                mov byte [commptr + rdx], cl
+                sub cl, 2
+                mov byte [commBuffer + rcx], 0x0
+                pop rdx
+                inc rax
+                inc rcx
+            jmp .cmp
+        .done_parsing:
+            
     .done:
     ret
 
 printName   db  "PRINT", 0x0
 infoName    db  "INFO", 0x0
 rebootName  db  "REBOOT", 0x0
+printlnName db  "PRINTLN", 0x0
 CMDDATA:
 commandID   db  0
 commBuffer  times 100 db 0

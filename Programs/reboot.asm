@@ -1,5 +1,5 @@
 program_reboot:
-    mov di, 11
+    mov dl, 11
     mov ah, 2
     mov al, 2
     mov rsi, rebootString

@@ -2,8 +2,9 @@ org 0x10000
 bits 64
 jmp longmode
 
-%include 'Programs/info.asm'
 %include 'constants.asm'
+%include 'Programs/info.asm'
+%include 'Programs/print.asm'
 %include 'Programs/reboot.asm'
 
 longmode:
@@ -62,6 +63,7 @@ longmode:
 			.read_enter:
 				mov bl, 1
 				mov byte [sendCommand], bl
+				call [CLR_SCR_ADDR]
 				jmp .done_read
 
 		.done_read:
@@ -77,7 +79,6 @@ longmode:
 			mov al, 0
 			rep stosb
 			mov byte [bufferPointer], 0
-			call [CLR_SCR_ADDR]
 			mov rbx, [COMMAND_ID_ADDR]
 			mov byte al, [rbx]
 			cmp al, PROG_PRINT_ID
@@ -85,6 +86,8 @@ longmode:
 			je .print_cmd
 			jg .pcheck_info
 			.print_cmd:
+				mov byte [print_ln_flag], 0
+				call program_print
 				jmp .no_command
 			.pcheck_info:
 				cmp al, PROG_INFO_ID
@@ -93,8 +96,14 @@ longmode:
 				jmp .no_command
 			.pcheck_reboot:
 				cmp al, PROG_REBOOT_ID
-				jg .wrong_command
+				jg .pcheck_println
 				call program_reboot
+				jmp .no_command
+			.pcheck_println:
+				cmp al, PROG_PRINTLN_ID
+				jg .wrong_command
+				mov byte [print_ln_flag], 1
+				call program_print
 				jmp .no_command
 
 		.wrong_command:

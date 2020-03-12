@@ -47,7 +47,6 @@ DAP:
 	.firstsector	dq	0x0
 
 stage2:
-	call println
 	mov si, LoadGood
 	call println
 	xor ax, ax

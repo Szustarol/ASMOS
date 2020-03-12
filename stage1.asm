@@ -73,6 +73,7 @@ start:
 	mov byte [DAP_LOAD_SUPPORTED_ADDR], 0xff
 	mov si, DAPLoad
 	call println
+	.loadDone:
 	;get drive geometry
 	mov ah, 0x08
 	mov di, 0x0000
@@ -82,7 +83,6 @@ start:
 	mov [HEADS_PER_CYLINDER_ADDR], dh
 	and cl, 0x3f
 	mov [SECTORS_PER_TRACK_ADDR], cl
-	.loadDone:
 	jmp 0x0000:stage2
 
 

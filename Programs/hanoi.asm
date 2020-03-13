@@ -104,6 +104,36 @@ diskPositions1  db  0xff
 diskPositions2  db  0
 diskPositions3  db  0
 
+;al - mov1
+;ah - mov2
+move_disk:
+    push rcx
+    mov cl, 0
+    .l:
+        mov ch, 1
+        shl ch, cl
+        test al, ch
+        jnz .altoah
+        test ah, ch
+        jnz .ahtoal
+        inc cl
+        jmp .l
+    .altoah:
+        not ch
+        and al, ch
+        not ch
+        or ah, ch
+        jmp .dn
+    .ahtoal:
+        not ch
+        and ah, ch
+        not ch
+        or al, ch
+    .dn:
+    pop rcx
+    ret
+
+
 ;rax - positions addr
 ;rbx - stick pos addr
 stick_draw:
@@ -138,8 +168,88 @@ hanoiP      db  "Press any key for the next step...", 0x0
 
 ;assume add program is included first, so number to string function is present
 
+numdisks db 8
+numiters dw 0
+kbduse   db 0
+
+pillarposreal times 3 db 0
+
 program_hanoi: 
+    ;parse number of disks
+    mov byte [numdisks], 0
+    mov byte [numiters], 0
+    mov byte [kbduse], 0
+    mov qword [steps], 0
+    xor rcx, rcx
+    mov al, 0
+    jmp .in_loop
+    .prev_loop:
+        inc rcx
+    .in_loop:
+        mov rbx, [COMMAND_POINTER_ADDR]
+        mov byte bl, [rbx+rcx]
+        cmp bl, 0
+        je .loop_over
+        dec bl
+        and rbx, 0x00000000000000ff
+        mov rsi, [COMMAND_BUFFER_ADDR]
+        add rsi, rbx
+        mov byte dl, [rsi]
+        sub dl, '0'
+        cmp dl, 0
+        jle .prev_loop
+        cmp dl, 8
+        jg .prev_loop
+        mov al, dl
+        jmp .loop_over
+    .loop_over:
+    mov byte [diskPositions2], 0
+    mov byte [diskPositions3], 0
+
+    cmp al, 0
+    jne .alok
+    mov al, 1
+
+    .alok:
+
+    mov [numdisks], al
+    mov cl, 0
+    mov dh, 0
+    .lp:
+        cmp al, 0
+        je .dnlp
+        mov dl, 1
+        shl dl, cl
+        inc cl
+        dec al
+        or dh, dl
+        jmp .lp
+    .dnlp:
+
+    mov byte [diskPositions1], dh
+
+    mov cl, [numdisks]
+    mov ax, 1
+    shl ax, cl
+    sub ax, 1
+    mov word [numiters], ax
+
+    mov byte al, pillarpos1
+    mov byte [pillarposreal], al
+    mov byte al, pillarpos2
+    mov byte [pillarposreal+1], al
+    mov byte al, pillarpos3
+    mov byte [pillarposreal+2], al
+    mov byte al, [numdisks]
+    test al, 1
+    jnz .hanoi_draw_loop
+    mov byte al, pillarpos2
+    mov byte [pillarposreal+2], al
+    mov byte al, pillarpos3
+    mov byte [pillarposreal+1], al
     .hanoi_draw_loop:
+        call [CLR_SCR_ADDR]
+        xor rax, rax
         mov rcx, 40
         mov al, 0
         mov rdi, hanoiDescEnd
@@ -154,19 +264,68 @@ program_hanoi:
         call [PRINT_STRING_ADDR]
         call hanoi_frame_draw
         mov rax, diskPositions1
-        mov bl, pillarpos1
+        mov bl, [pillarposreal]
         call stick_draw   
         mov rax, diskPositions2
-        mov bl, pillarpos2
+        mov bl, [pillarposreal+1]
         call stick_draw       
-        mov rax, diskPositions2
-        mov bl, pillarpos2
+        mov rax, diskPositions3
+        mov bl, [pillarposreal+2]
         call stick_draw      
         mov rsi, hanoiP
         mov ah, 17
         mov al, 2
         mov dl, 11
         call [PRINT_STRING_ADDR]   
+        cmp byte [kbduse], 0
+        jne .nokbd
         call [KBD_GETCH]
+        ;calculate div
+        .nokbd:
+        xor rdx, rdx
+        mov qword rax, [steps]
+        cmp word ax, [numiters]
+        je .hanoi_done
+        inc rax
+        cmp word ax, [numiters]
+        jne .noincrease
+            mov byte [kbduse], 1
+        .noincrease:
+        mov qword [steps], rax
+        mov rcx, 3
+        div rcx
+        cmp rdx, 1
+        je .step1
+        cmp rdx, 2
+        je .step2
+        .step3:
+            mov byte al, [diskPositions3]
+            mov byte ah, [diskPositions2]
+            call move_disk
+            mov byte [diskPositions3], al
+            mov byte [diskPositions2], ah
+            jmp .dn
+        .step2:
+            mov byte al, [diskPositions1]
+            mov byte ah, [diskPositions2]
+            call move_disk
+            mov byte [diskPositions1], al
+            mov byte [diskPositions2], ah
+            jmp .dn
+        .step1:
+            mov byte al, [diskPositions1]
+            mov byte ah, [diskPositions3]
+            call move_disk
+            mov byte [diskPositions1], al
+            mov byte [diskPositions3], ah
+        .dn:
         jmp .hanoi_draw_loop  
+    .hanoi_done:
+    mov ah, 20
+    mov al, 2
+    mov dl, 11
+    mov rsi, hanoiDoneStr
+    call [PRINT_STRING_ADDR]
     ret
+
+    hanoiDoneStr    db  "Solving completed. You can now type commands.", 0x0

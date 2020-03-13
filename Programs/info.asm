@@ -20,6 +20,6 @@ infoString db "MyOS developed by Karol Szustakowski, 2020", 0x0, \
 "    -PRINTLN [PARAMS] - print each param in a new line", 0x0, \
 "    -ADD [PARAMS] - add numbers in [PARAMS] and display result", 0x0, \
 "    -SUB [PARAMS] - substract numbers in [params] and display result", 0x0, \
-"    -HANOI [N=1-7]- hanoi tower solver, with N disks", 0x0, \
+"    -HANOI [N=1-8]- hanoi tower solver, with N disks", 0x0, \
 "    -REBOOT - restart the system."
 infoStringEnd: db 0x0

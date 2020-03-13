@@ -3,9 +3,11 @@ bits 64
 jmp longmode
 
 %include 'constants.asm'
+%include 'Programs/add.asm'
 %include 'Programs/info.asm'
 %include 'Programs/print.asm'
 %include 'Programs/reboot.asm'
+%include 'Programs/hanoi.asm'
 
 longmode:
 	mov rsi, kernelOn
@@ -101,9 +103,26 @@ longmode:
 				jmp .no_command
 			.pcheck_println:
 				cmp al, PROG_PRINTLN_ID
-				jg .wrong_command
+				jg .pcheck_add
 				mov byte [print_ln_flag], 1
 				call program_print
+				jmp .no_command
+			.pcheck_add:
+				cmp al, PROG_ADD_ID
+				jg .pcheck_sub
+				mov byte [subflag], 0
+				call program_add
+				jmp .no_command
+			.pcheck_sub:
+				cmp al, PROG_SUB_ID
+				jg .pcheck_hanoi
+				mov byte [subflag], 1
+				call program_add
+				jmp .no_command
+			.pcheck_hanoi:
+				cmp al, PROG_HANOI_ID
+				jg .wrong_command
+				call program_hanoi
 				jmp .no_command
 
 		.wrong_command:

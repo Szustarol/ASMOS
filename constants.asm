@@ -22,6 +22,9 @@ PROG_PRINT_ID           equ 1
 PROG_INFO_ID            equ 2
 PROG_REBOOT_ID          equ 3
 PROG_PRINTLN_ID         equ 4
+PROG_ADD_ID             equ 5
+PROG_SUB_ID             equ 6
+PROG_HANOI_ID           equ 7
 
 KBD_ENC_INP_BUFF        equ 0x60
 KBD_ENC_CMD_REGS        equ 0x60

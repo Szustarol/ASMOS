@@ -90,6 +90,18 @@ parse_command:
     call space_compare
     cmp rcx, 0
     jne .got_println
+    mov rbx, addName
+    call space_compare
+    cmp rcx, 0
+    jne .got_add
+    mov rbx, subName
+    call space_compare
+    cmp rcx, 0
+    jne .got_sub
+    mov rbx, hanoiName
+    call space_compare
+    cmp rcx, 0
+    jne .got_hanoi
     jmp .done
     .got_print:
         mov byte [commandID], PROG_PRINT_ID
@@ -102,6 +114,15 @@ parse_command:
         jmp .parse_params
     .got_println:
         mov byte [commandID], PROG_PRINTLN_ID
+        jmp .parse_params
+    .got_add:
+        mov byte [commandID], PROG_ADD_ID
+        jmp .parse_params
+    .got_sub:
+        mov byte [commandID], PROG_SUB_ID
+        jmp .parse_params
+    .got_hanoi:
+        mov byte [commandID], PROG_HANOI_ID
         jmp .parse_params
     .parse_params:
         xor rdx, rdx
@@ -141,6 +162,9 @@ printName   db  "PRINT", 0x0
 infoName    db  "INFO", 0x0
 rebootName  db  "REBOOT", 0x0
 printlnName db  "PRINTLN", 0x0
+addName     db  "ADD", 0x0
+subName     db  "SUB", 0x0
+hanoiName   db  "HANOI", 0x0
 CMDDATA:
 commandID   db  0
 commBuffer  times 100 db 0

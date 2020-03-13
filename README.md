@@ -10,9 +10,13 @@ and not use additional charmaps.
 
 Here are some screenshots from the OS:
 Hanoi tower solver program:
+
 ![Hanoi solver](hanoi.png)
+
 And the information panel:
+
 ![Information panel](info.png)
+
 
 
 Anyone interested in developing an OS - feel free to contact me, I will help if I can 

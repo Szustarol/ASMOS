@@ -9,6 +9,7 @@ jmp longmode
 %include 'Programs/reboot.asm'
 %include 'Programs/hanoi.asm'
 
+
 longmode:
 	mov rsi, kernelOn
 	mov ah, 13
@@ -69,6 +70,10 @@ longmode:
 				jmp .done_read
 
 		.done_read:
+		mov ah, 23
+		mov byte al, [bufferPointer]
+		inc al
+		call [SET_CUR_POS_ADDR]
 		mov al, [sendCommand]
 		cmp al, 0
 		je .no_command;if should parse the command
@@ -134,6 +139,10 @@ longmode:
 			jmp .no_command
 			
 		.no_command:
+		mov ah, 23
+		mov byte al, [bufferPointer]
+		inc al
+		call [SET_CUR_POS_ADDR]
 		jmp .main_loop
 
 	;;rsi - source pointer

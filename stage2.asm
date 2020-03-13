@@ -374,6 +374,7 @@ bits 64
 %include 'Utility/screen.asm'
 %include 'Utility/keyboard.asm'
 %include 'Utility/commandParser.asm'
+%include 'Utility/setCursorPos.asm'
 
 mode_64:
 	mov rsp, 0x00EFFFFF
@@ -389,6 +390,7 @@ mode_64:
 	mov qword [KBD_GETCH], keyboard_getch
 	mov qword [KBD_DISCARD], keyboard_discard_buffer
 	mov qword [CMD_PARSE_ADDR], parse_command
+	mov qword [SET_CUR_POS_ADDR], set_cursor_pos
 	call keyboard_self_test
 	cmp al, 0x55
 	je .kbdok

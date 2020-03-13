@@ -3,7 +3,8 @@ bits 64
 clr_scr:
 	mov rdi, 0xb8000
 	mov rcx, scrwidth*scrheight
-	mov ax, 0
+	mov ah, 11
+	mov al, 0x0
 	rep stosw
 	mov al, 205
 	mov ah, 13
@@ -40,7 +41,9 @@ clr_scr:
 	mov word [0xb8000 + (scrheight-3)*scrwidth*2], ax
 	mov al, 185
 	mov word [0xb8000 +  (scrheight-2)*scrwidth*2-2], ax
-
+	mov al, 1
+	mov ah, 23
+	call [SET_CUR_POS_ADDR]
 	ret 
 
 ;;rsi - source pointer

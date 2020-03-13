@@ -10,8 +10,8 @@ CLR_SCR_ADDR            equ 0x518
 KBD_GETCH               equ 0x520
 KBD_DISCARD             equ 0x528
 CMD_PARSE_ADDR          equ 0x530
-PRINT_PROG_ADDR         equ 0x538
-INFO_PROG_ADDR          equ 0x540
+SET_CUR_POS_ADDR        equ 0x538
+
 
 COMMAND_ID_ADDR         equ 0x600
 COMMAND_BUFFER_ADDR     equ 0x608
